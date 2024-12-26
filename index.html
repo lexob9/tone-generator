@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tone Generator with Sweep</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        input[type="number"] {
+            width: 120px;
+            padding: 5px;
+            margin: 5px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .value-display {
+            font-size: 1.2em;
+            color: #007bff;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background-color: #e9ecef;
+        }
+        .frequency-examples {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .frequency-examples h3 {
+            margin-top: 0;
+        }
+        .button-list button {
+            margin: 5px 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tone Generator with Sweep</h1>
+        
+        <div class="status">
+            Current Frequency: <span id="currentFreq">528</span> Hz
+        </div>
+
+        <div class="timer">
+            Timer: <span id="timer">0</span> seconds
+        </div>
+
+        <div class="control-group">
+            <h3>Controls</h3>
+            <div>
+                <label>Start Frequency (Hz)</label>
+                <input type="number" id="startFreq" value="528" min="20" max="20000">
+                <button id="freqUp">&#9650; Up</button>
+                <button id="freqDown">&#9660; Down</button>
+            </div>
+            <div>
+                <label>End Frequency (Hz)</label>
+                <input type="number" id="endFreq" value="528" min="20" max="20000">
+            </div>
+            <div>
+                <label>Sweep Rate (Hz)</label>
+                <input type="number" id="sweepRate" min="1" max="1000" value="1">
+            </div>
+            <div>
+                <label>Time Interval (seconds)</label>
+                <input type="number" id="timeInterval" min="0.1" step="0.1" value="1">
+            </div>
+            <button id="toggleSweep">Start Sweep</button>
+            <button id="toggleSound">Start Sound</button>
+        </div>
+
+        <div class="frequency-examples">
+            <h3>Examples of Good Frequencies</h3>
+            <div class="button-list">
+                <button onclick="setFrequencyTo(174)">174 Hz</button>
+                <button onclick="setFrequencyTo(285)">285 Hz</button>
+                <button onclick="setFrequencyTo(396)">396 Hz</button>
+                <button onclick="setFrequencyTo(417)">417 Hz</button>
+                <button onclick="setFrequencyTo(432)">432 Hz</button>
+                <button onclick="setFrequencyTo(528)">528 Hz</button>
+                <button onclick="setFrequencyTo(639)">639 Hz</button>
+                <button onclick="setFrequencyTo(741)">741 Hz</button>
+                <button onclick="setFrequencyTo(852)">852 Hz</button>
+                <button onclick="setFrequencyTo(963)">963 Hz</button>
+                <button onclick="setFrequencyTo(333)">333 Hz</button>
+                <button onclick="setFrequencyTo(777)">777 Hz</button>
+                <button onclick="setFrequencyTo(999)">999 Hz</button>
+                <button onclick="setFrequencyTo(1111)">1111 Hz</button>
+                <button onclick="setFrequencyTo(4444)">4444 Hz</button>
+                <button onclick="setFrequencyTo(9999)">9999 Hz</button>
+                
+            </div>
+            <ul>
+                <li><strong>174 Hz</strong> - Said to reduce pain and promote relaxation by alleviating tension.</li>
+                <li><strong>285 Hz</strong> - Associated with accelerating tissue repair and enhancing cellular healing.</li>
+                <li><strong>396 Hz</strong> - Associated with releasing fear and guilt in some alternative healing practices</li>
+                <li><strong>417 Hz</strong> - Claimed to facilitate change and let go of negative energy</li>
+                <li><strong>432 Hz</strong> - Often claimed to be in harmony with nature and said to promote feelings of peace and well-being</li>
+                <li><strong>528 Hz</strong> - Sometimes called the "love frequency" or "miracle tone," claimed to promote healing</li>
+                <li><strong>639 Hz</strong> - Said to promote harmony in relationships and interpersonal connections</li>
+                <li><strong>741 Hz</strong> - Claimed to aid in problem-solving, self-expression, and detoxifying the body.</li>
+                <li><strong>852 Hz</strong> - Believed to raise intuition and align spiritual energy.</li>
+                <li><strong>963 Hz</strong> - Called the "frequency of the gods," thought to activate higher consciousness and connection to universal energies.</li>
+                <li><strong>333, 777, 999, 1111, 4444, 9999</strong> - Angelic frequencies.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        let oscillator = null;
+        let isPlaying = false;
+        let isSweeping = false;
+        let sweepInterval = null;
+        let timerInterval = null;
+        let currentFrequency = 440;
+        let timerValue = 0;
+        let holdInterval = null;
+
+        // Initialize audio context
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            oscillator = audioCtx.createOscillator();
+
+            oscillator.connect(audioCtx.destination);
+            currentFrequency = parseFloat(document.getElementById('startFreq').value);
+            oscillator.frequency.value = Math.min(Math.max(currentFrequency, 20), 20000);
+            document.getElementById('currentFreq').textContent = Math.round(currentFrequency);
+            oscillator.start();
+
+            // Start timer
+            timerValue = 0;
+            document.getElementById('timer').textContent = timerValue;
+            timerInterval = setInterval(() => {
+                timerValue += 1;
+                document.getElementById('timer').textContent = timerValue;
+            }, 1000);
+        }
+
+        // Update frequency
+        function setFrequency(freq) {
+            currentFrequency = Math.min(Math.max(freq, 20), 20000);
+            document.getElementById('currentFreq').textContent = Math.round(currentFrequency);
+            if (oscillator) {
+                oscillator.frequency.setValueAtTime(currentFrequency, audioCtx.currentTime);
+            }
+        }
+
+        // Set frequency to predefined values
+        function setFrequencyTo(freq) {
+            document.getElementById('startFreq').value = freq;
+            setFrequency(freq);
+        }
+
+        // Change frequency by an increment
+        function changeFrequencyBy(increment) {
+            const currentStartFreq = parseFloat(document.getElementById('startFreq').value) || 440;
+            const newFreq = Math.min(Math.max(currentStartFreq + increment, 20), 20000);
+            document.getElementById('startFreq').value = newFreq;
+            setFrequency(newFreq);
+        }
+
+        // Hold frequency change on button hold
+        function holdFrequencyChange(increment) {
+            changeFrequencyBy(increment); // Immediate change
+            holdInterval = setInterval(() => {
+                changeFrequencyBy(increment);
+            }, 200);
+        }
+
+        function stopFrequencyChange() {
+            clearInterval(holdInterval);
+        }
+
+        document.getElementById('freqUp').addEventListener('mousedown', () => holdFrequencyChange(1));
+        document.getElementById('freqUp').addEventListener('mouseup', stopFrequencyChange);
+        document.getElementById('freqUp').addEventListener('mouseleave', stopFrequencyChange);
+
+        document.getElementById('freqDown').addEventListener('mousedown', () => holdFrequencyChange(-1));
+        document.getElementById('freqDown').addEventListener('mouseup', stopFrequencyChange);
+        document.getElementById('freqDown').addEventListener('mouseleave', stopFrequencyChange);
+
+        // Toggle sound
+        document.getElementById('toggleSound').addEventListener('click', () => {
+            if (!isPlaying) {
+                initAudio();
+                isPlaying = true;
+                document.getElementById('toggleSound').textContent = 'Stop Sound';
+            } else {
+                if (isSweeping) {
+                    stopSweep();
+                }
+                oscillator.stop();
+                audioCtx.close();
+                isPlaying = false;
+                document.getElementById('toggleSound').textContent = 'Start Sound';
+
+                // Stop timer
+                clearInterval(timerInterval);
+                document.getElementById('timer').textContent = '0';
+            }
+        });
+
+        // Sweep function
+        function startSweep() {
+            if (!isPlaying) {
+                initAudio();
+                isPlaying = true;
+                document.getElementById('toggleSound').textContent = 'Stop Sound';
+            }
+
+            const startFreq = parseFloat(document.getElementById('startFreq').value);
+            const endFreq = parseFloat(document.getElementById('endFreq').value);
+            const sweepRate = parseFloat(document.getElementById('sweepRate').value);
+            const timeInterval = parseFloat(document.getElementById('timeInterval').value);
+
+            setFrequency(startFreq);
+
+            const updateInterval = timeInterval * 1000; // Convert seconds to milliseconds
+            const freqStep = sweepRate;
+
+            sweepInterval = setInterval(() => {
+                if ((sweepRate > 0 && currentFrequency >= endFreq) || (sweepRate < 0 && currentFrequency <= endFreq)) {
+                    stopSweep();
+                    return;
+                }
+                setFrequency(currentFrequency + freqStep);
+            }, updateInterval);
+        }
+
+        function stopSweep() {
+            clearInterval(sweepInterval);
+            isSweeping = false;
+            document.getElementById('toggleSweep').textContent = 'Start Sweep';
+        }
+
+        // Toggle sweep
+        document.getElementById('toggleSweep').addEventListener('click', () => {
+            if (!isSweeping) {
+                startSweep();
+                isSweeping = true;
+                document.getElementById('toggleSweep').textContent = 'Stop Sweep';
+            } else {
+                stopSweep();
+            }
+        });
+    </script>
+</body>
+</html>
+
