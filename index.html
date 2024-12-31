@@ -90,13 +90,13 @@
             <h3>Controls</h3>
             <div>
                 <label>Start Frequency (Hz)</label>
-                <input type="number" id="startFreq" value="528" min="20" max="20000">
-                <button id="freqUp">&#9650; Up</button>
+                <input type="number" id="startFreq" value="396" min="0" max="20000">
                 <button id="freqDown">&#9660; Down</button>
+                <button id="freqUp">&#9650; Up</button>
             </div>
             <div>
                 <label>End Frequency (Hz)</label>
-                <input type="number" id="endFreq" value="528" min="20" max="20000">
+                <input type="number" id="endFreq" value="396" min="0" max="20000">
             </div>
             <div>
                 <label>Sweep Rate (Hz)</label>
@@ -115,16 +115,16 @@
             <div class="button-list">
                 <button onclick="setFrequencyTo(174)">174 Hz</button>
                 <button onclick="setFrequencyTo(285)">285 Hz</button>
+                <button onclick="setFrequencyTo(333)">333 Hz</button>
                 <button onclick="setFrequencyTo(396)">396 Hz</button>
                 <button onclick="setFrequencyTo(417)">417 Hz</button>
                 <button onclick="setFrequencyTo(432)">432 Hz</button>
                 <button onclick="setFrequencyTo(528)">528 Hz</button>
                 <button onclick="setFrequencyTo(639)">639 Hz</button>
                 <button onclick="setFrequencyTo(741)">741 Hz</button>
+                <button onclick="setFrequencyTo(777)">777 Hz</button>
                 <button onclick="setFrequencyTo(852)">852 Hz</button>
                 <button onclick="setFrequencyTo(963)">963 Hz</button>
-                <button onclick="setFrequencyTo(333)">333 Hz</button>
-                <button onclick="setFrequencyTo(777)">777 Hz</button>
                 <button onclick="setFrequencyTo(999)">999 Hz</button>
                 <button onclick="setFrequencyTo(1111)">1111 Hz</button>
                 <button onclick="setFrequencyTo(4444)">4444 Hz</button>
@@ -154,7 +154,7 @@
         let isSweeping = false;
         let sweepInterval = null;
         let timerInterval = null;
-        let currentFrequency = 440;
+        let currentFrequency = 1;
         let timerValue = 0;
         let holdInterval = null;
 
@@ -165,7 +165,7 @@
 
             oscillator.connect(audioCtx.destination);
             currentFrequency = parseFloat(document.getElementById('startFreq').value);
-            oscillator.frequency.value = Math.min(Math.max(currentFrequency, 20), 20000);
+            oscillator.frequency.value = Math.min(Math.max(currentFrequency, 1), 20000);
             document.getElementById('currentFreq').textContent = Math.round(currentFrequency);
             oscillator.start();
 
@@ -180,7 +180,7 @@
 
         // Update frequency
         function setFrequency(freq) {
-            currentFrequency = Math.min(Math.max(freq, 20), 20000);
+            currentFrequency = Math.min(Math.max(freq, 1), 20000);
             document.getElementById('currentFreq').textContent = Math.round(currentFrequency);
             if (oscillator) {
                 oscillator.frequency.setValueAtTime(currentFrequency, audioCtx.currentTime);
@@ -196,7 +196,7 @@
         // Change frequency by an increment
         function changeFrequencyBy(increment) {
             const currentStartFreq = parseFloat(document.getElementById('startFreq').value) || 440;
-            const newFreq = Math.min(Math.max(currentStartFreq + increment, 20), 20000);
+            const newFreq = Math.min(Math.max(currentStartFreq + increment, 1), 20000);
             document.getElementById('startFreq').value = newFreq;
             setFrequency(newFreq);
         }
